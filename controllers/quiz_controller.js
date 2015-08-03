@@ -78,6 +78,14 @@ exports.new = function(req, res) {
   res.render('quizes/new', {quiz: quiz, errors: []});
 };
 
+// DELETE /quizes/:id
+exports.destroy = function(req, res) {
+  req.quiz.destroy().then( function() {
+    res.redirect('/quizes');
+  }).catch(function(error){next(error)});
+};
+
+
 // POST /quizes/create
 exports.create = function(req, res) {
   var quiz = models.Quiz.build( req.body.quiz );
