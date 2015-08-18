@@ -12,6 +12,7 @@ var routes = require('./routes/index');
 
 var app = express();
 
+var isFromSession = false;
 // view engine setup
 app.set('views', path.join(__dirname, 'views'));
 app.set('view engine', 'ejs');
@@ -23,20 +24,43 @@ app.use(logger('dev'));
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded());
 app.use(cookieParser('Quiz-vitus'));
-app.use(session());
+app.use(session({
+			name: 'quiz-2015', // configuración de la cookie
+            secret: 'huertix',
+            resave: true,       // Forces the session to be saved back to the session store
+            rolling: true,      // Force a cookie to be set on every response. This resets the expiration date.
+            saveUninitialized: false,       //
+            cookie: { maxAge: 60000}  // Tiempo de la sesion, expiración de la cookie -> 30000 = 1min.
+            }));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
 
 // Helpers dinamicos:
 app.use(function(req, res, next) {
 
+	// Hacer visible req.session en las vistas
+    req.session.touch();
+    res.locals.session = req.session; 
   // guardar path en session.redir para despues de login
   if (!req.path.match(/\/login|\/logout/)) {
     req.session.redir = req.path;
   }
 
-  // Hacer visible req.session en las vistas
-  res.locals.session = req.session;
+	if(req.session.user){
+        isFromSession = true;
+        console.log("en sesión");
+
+    }else{
+        if(isFromSession){
+            isFromSession = false;
+            console.log("fuera de la sesión");
+            var err = new Error('Sesión Finalizada');
+            err.status = 1001;
+            next(err);          
+        }
+    }
+
+
   next();
 });
 
